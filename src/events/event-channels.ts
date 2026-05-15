@@ -1,0 +1,36 @@
+// Canais Redis Pub/Sub que o wa-worker publica e o bot-api consome.
+// Cada evento eh JSON.stringify do payload correspondente.
+
+export const WA_EVENT_QR = 'wa:event:qr';
+export const WA_EVENT_STATUS = 'wa:event:status';
+export const WA_EVENT_MESSAGE_RECEIVED = 'wa:event:message.received';
+export const WA_EVENT_MESSAGE_STATUS = 'wa:event:message.status';
+
+export interface WaQrEventPayload {
+  userId: string;
+  qrDataUrl: string;
+}
+
+export interface WaStatusEventPayload {
+  userId: string;
+  status: 'CONNECTED' | 'DISCONNECTED' | 'PENDING';
+  phone: string | null;
+}
+
+export interface WaMessageReceivedPayload {
+  userId: string;
+  whatsappMessageId: string | null;
+  botPhoneNumber: string;
+  leadPhoneNumber: string;
+  leadName: string | null;
+  text: string;
+  mediaUrl: string | null;
+  mediaType: 'image' | null;
+  receivedAt: string;
+}
+
+export interface WaMessageStatusPayload {
+  userId: string;
+  whatsappMessageId: string;
+  status: 'PENDING' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED';
+}

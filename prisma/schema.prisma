@@ -1,0 +1,25 @@
+// Schema minimal do wa-worker — espelha apenas as tabelas que o worker
+// precisa acessar diretamente. As demais (conversations, message_history,
+// flows etc.) seguem sendo escritas pelo bot-api a partir dos eventos
+// publicados via Redis Pub/Sub.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model whatsapp_sessions {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  creds            String?
+  keys             String?
+  connectionStatus String    @default("DISCONNECTED")
+  connectedPhone   String?
+  lastSeenAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}

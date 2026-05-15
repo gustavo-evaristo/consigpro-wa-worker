@@ -1,0 +1,9 @@
+node_modules
+dist
+generated
+.git
+.env
+.env.local
+*.log
+README.md
+CLAUDE.md
