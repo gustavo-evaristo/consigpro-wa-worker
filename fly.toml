@@ -1,31 +1,35 @@
-app = "consigpro-wa-worker"
-primary_region = "gru"
+# fly.toml app configuration file generated for consigpro-wa-worker on 2026-05-15T21:24:56Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'consigpro-wa-worker'
+primary_region = 'ams'
 
 [build]
 
 [env]
-  PORT = "8080"
-  NODE_ENV = "production"
+  NODE_ENV = 'production'
+  PORT = '8080'
 
 [http_service]
   internal_port = 8080
-  force_https = false
-  auto_stop_machines = "off"
+  auto_stop_machines = 'off'
   auto_start_machines = false
   min_machines_running = 1
 
   [http_service.concurrency]
-    type = "connections"
+    type = 'connections'
     hard_limit = 200
     soft_limit = 100
 
   [[http_service.checks]]
-    interval = "15s"
-    timeout = "3s"
-    grace_period = "20s"
-    method = "get"
-    path = "/health"
+    interval = '15s'
+    timeout = '3s'
+    grace_period = '20s'
+    method = 'get'
+    path = '/health'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "1gb"
+  size = 'shared-cpu-1x'
+  memory = '1gb'
