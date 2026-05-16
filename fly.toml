@@ -4,7 +4,7 @@
 #
 
 app = 'consigpro-wa-worker'
-primary_region = 'ams'
+primary_region = 'gru'
 
 [build]
 
