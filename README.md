@@ -46,7 +46,26 @@ REDIS_URL=rediss://...             # mesmo do bot-api
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJh...
 SUPABASE_STORAGE_BUCKET=wa-media
+WA_WORKER_ACTIVE=false             # standby; vira true no cutover
 ```
+
+## Coexistência segura com bot-api (modo standby)
+
+`WA_WORKER_ACTIVE=false` (default) deixa o wa-worker "vivo mas idle":
+
+- ✅ Conecta no Redis, Postgres, BullMQ, responde `/health`.
+- ❌ Não tenta abrir sockets Baileys (reconcile no-op).
+- ❌ Rejeita jobs BullMQ.
+
+Permite manter o wa-worker deployed (scale > 0) sem competir com o
+bot-api pelos locks. O cutover acontece quando você sobe **as duas
+flags juntas**:
+
+| `WA_WORKER_ACTIVE` (wa-worker) | `WA_WORKER_ENABLED` (bot-api) | Resultado |
+|---|---|---|
+| `false` | `false` | bot-api faz tudo; wa-worker idle. **Estado seguro.** |
+| `true` | `true` | wa-worker assume; bot-api consume eventos. **Modo desejado.** |
+| Misto | Misto | INSTÁVEL. Mensagens podem ficar órfãs. **Evitar.** |
 
 ## Deploy
 

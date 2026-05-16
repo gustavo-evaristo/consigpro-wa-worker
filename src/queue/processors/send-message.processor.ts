@@ -2,6 +2,7 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { SessionManagerService } from '../../baileys/session-manager.service';
+import { isWaWorkerActive } from '../../config/feature-flags';
 import {
   SendMessageJobData,
   SendMessageJobResult,
@@ -19,6 +20,9 @@ export class SendMessageProcessor extends WorkerHost {
   async process(
     job: Job<SendMessageJobData>,
   ): Promise<SendMessageJobResult> {
+    if (!isWaWorkerActive()) {
+      throw new Error('wa-worker em standby (WA_WORKER_ACTIVE=false)');
+    }
     const { userId, leadPhoneNumber, content, correlationId } = job.data;
     const { whatsappMessageId } = await this.sessions.sendMessage(
       userId,

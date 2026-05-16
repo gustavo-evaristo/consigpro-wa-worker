@@ -2,6 +2,7 @@ import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { SessionManagerService } from '../baileys/session-manager.service';
 import { WhatsAppSessionRepository } from '../persistence/whatsapp-session.repository';
+import { isWaWorkerActive } from '../config/feature-flags';
 
 @Injectable()
 export class ReconcileService implements OnApplicationShutdown {
@@ -25,6 +26,10 @@ export class ReconcileService implements OnApplicationShutdown {
    */
   @Interval(30_000)
   async reconcile(): Promise<void> {
+    if (!isWaWorkerActive()) {
+      // Wa-worker em standby — nao tenta pegar locks. Bot-api continua dono.
+      return;
+    }
     try {
       const userIds = await this.repo.findAllUserIds();
       for (const userId of userIds) {
