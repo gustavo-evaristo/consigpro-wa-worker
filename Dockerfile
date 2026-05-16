@@ -21,11 +21,10 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/generated ./generated
 COPY --from=builder /app/package.json ./package.json
 
 ENV NODE_ENV=production
 
 EXPOSE 8080
 
-CMD ["node", "dist/src/main"]
+CMD ["node", "dist/main"]
