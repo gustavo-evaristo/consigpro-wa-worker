@@ -284,7 +284,7 @@ export class SessionManagerService {
 
   /**
    * Job de envio: usado pelo SendMessageProcessor. Retorna whatsappMessageId
-   * para o caller (bot-api) saber qual mensagem foi enviada.
+   * para o caller (consigpro-api) saber qual mensagem foi enviada.
    */
   async sendMessage(
     userId: string,

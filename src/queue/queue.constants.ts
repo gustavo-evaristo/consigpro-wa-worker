@@ -1,4 +1,4 @@
-// Filas BullMQ que o bot-api enfileira e o wa-worker consome.
+// Filas BullMQ que o consigpro-api enfileira e o wa-worker consome.
 // Cada fila tem 1 tipo de job. O nome do job dentro da fila eh ignorado;
 // o consumer trata pelo nome da fila.
 
@@ -15,7 +15,7 @@ export interface SendMessageJobData {
   userId: string;
   leadPhoneNumber: string;
   content: string;
-  // ID interno do bot-api (pending_outbound_message ou message_history)
+  // ID interno do consigpro-api (pending_outbound_message ou message_history)
   // pra que ele consiga correlacionar o resultado.
   correlationId: string;
 }

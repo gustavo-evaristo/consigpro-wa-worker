@@ -1,4 +1,4 @@
-// Canais Redis Pub/Sub que o wa-worker publica e o bot-api consome.
+// Canais Redis Pub/Sub que o wa-worker publica e o consigpro-api consome.
 // Cada evento eh JSON.stringify do payload correspondente.
 
 export const WA_EVENT_QR = 'wa:event:qr';

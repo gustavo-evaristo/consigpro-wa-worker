@@ -1,7 +1,7 @@
 {
   "name": "wa-worker",
   "version": "0.0.1",
-  "description": "Worker isolado de WhatsApp/Baileys — consome jobs do BullMQ, publica eventos via Redis Pub/Sub. Roda separado do bot-api para isolar o plano de dados WhatsApp do plano HTTP.",
+  "description": "Worker isolado de WhatsApp/Baileys — consome jobs do BullMQ, publica eventos via Redis Pub/Sub. Roda separado do consigpro-api para isolar o plano de dados WhatsApp do plano HTTP.",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 
 /**
  * Suprime logs verbosos da libsignal/Baileys que vem via console.log direto.
- * Mesmo padrao do bot-api — manter ambos os apps com logs limpos.
+ * Mesmo padrao do consigpro-api — manter ambos os apps com logs limpos.
  */
 function silenceLibsignalNoise() {
   const SUPPRESS = [
