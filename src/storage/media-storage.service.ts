@@ -29,12 +29,9 @@ export class MediaStorageService {
     private readonly bucket: string,
   ) {
     this.supabaseUrl = config?.get<string>('SUPABASE_URL') ?? null;
-    this.serviceRoleKey =
-      config?.get<string>('SUPABASE_SERVICE_ROLE_KEY') ?? null;
+    this.serviceRoleKey = config?.get<string>('SUPABASE_SERVICE_ROLE_KEY') ?? null;
     if (!this.supabaseUrl || !this.serviceRoleKey) {
-      this.logger.warn(
-        'SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY ausentes — Storage desabilitado',
-      );
+      this.logger.warn('SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY ausentes — Storage desabilitado');
     }
   }
 
@@ -42,23 +39,14 @@ export class MediaStorageService {
     return !!this.supabaseUrl && !!this.serviceRoleKey;
   }
 
-  async uploadImage(
-    buffer: Buffer,
-    path: string,
-    mimeType: string,
-  ): Promise<string | null> {
+  async uploadImage(buffer: Buffer, path: string, mimeType: string): Promise<string | null> {
     if (!this.isEnabled()) return null;
     if (buffer.byteLength > MAX_IMAGE_BYTES) {
-      this.logger.warn(
-        `Imagem excede ${MAX_IMAGE_BYTES} bytes (${buffer.byteLength}) — ignorada`,
-      );
+      this.logger.warn(`Imagem excede ${MAX_IMAGE_BYTES} bytes (${buffer.byteLength}) — ignorada`);
       return null;
     }
 
-    const encodedPath = path
-      .split('/')
-      .map(encodeURIComponent)
-      .join('/');
+    const encodedPath = path.split('/').map(encodeURIComponent).join('/');
     const url = `${this.supabaseUrl}/storage/v1/object/${this.bucket}/${encodedPath}`;
 
     try {
@@ -76,17 +64,13 @@ export class MediaStorageService {
 
       if (!resp.ok) {
         const text = await resp.text().catch(() => '');
-        this.logger.error(
-          `Falha ao subir imagem (${path}): ${resp.status} ${text}`,
-        );
+        this.logger.error(`Falha ao subir imagem (${path}): ${resp.status} ${text}`);
         return null;
       }
 
       return `${this.supabaseUrl}/storage/v1/object/public/${this.bucket}/${encodedPath}`;
     } catch (err) {
-      this.logger.error(
-        `Erro de rede ao subir imagem (${path}): ${(err as Error).message}`,
-      );
+      this.logger.error(`Erro de rede ao subir imagem (${path}): ${(err as Error).message}`);
       return null;
     }
   }

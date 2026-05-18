@@ -22,9 +22,7 @@ export class EventPublisherService {
     try {
       await this.redis.publish(channel, JSON.stringify(payload));
     } catch (err) {
-      this.logger.warn(
-        `Falha ao publicar ${channel}: ${(err as Error).message}`,
-      );
+      this.logger.warn(`Falha ao publicar ${channel}: ${(err as Error).message}`);
     }
   }
 

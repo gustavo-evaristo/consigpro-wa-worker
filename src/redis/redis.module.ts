@@ -29,9 +29,7 @@ function createClient(name: string, url: string): Redis {
       useFactory: (config: ConfigService): Redis => {
         const url = config.get<string>('REDIS_URL');
         if (!url) {
-          throw new Error(
-            'REDIS_URL eh obrigatorio no wa-worker (lock + pub/sub).',
-          );
+          throw new Error('REDIS_URL eh obrigatorio no wa-worker (lock + pub/sub).');
         }
         return createClient('pub', url);
       },

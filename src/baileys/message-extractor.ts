@@ -32,8 +32,7 @@ export function extractMessageText(innerMessage: any): string | null {
     innerMessage?.templateButtonReplyMessage?.selectedDisplayText ||
     innerMessage?.templateMessage?.hydratedTemplate?.hydratedContentText ||
     innerMessage?.templateMessage?.fourRowTemplate?.content?.conversation ||
-    innerMessage?.templateMessage?.fourRowTemplate?.content?.extendedTextMessage
-      ?.text ||
+    innerMessage?.templateMessage?.fourRowTemplate?.content?.extendedTextMessage?.text ||
     innerMessage?.interactiveMessage?.body?.text ||
     innerMessage?.reactionMessage?.text ||
     null

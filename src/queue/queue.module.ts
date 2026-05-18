@@ -1,11 +1,7 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import {
-  WA_MESSAGE_QUEUE,
-  WA_READ_QUEUE,
-  WA_SESSION_QUEUE,
-} from './queue.constants';
+import { WA_MESSAGE_QUEUE, WA_READ_QUEUE, WA_SESSION_QUEUE } from './queue.constants';
 import { StartSessionProcessor } from './processors/start-session.processor';
 import { SendMessageProcessor } from './processors/send-message.processor';
 import { MarkAsReadProcessor } from './processors/mark-as-read.processor';
@@ -36,10 +32,6 @@ import { MarkAsReadProcessor } from './processors/mark-as-read.processor';
       { name: WA_READ_QUEUE },
     ),
   ],
-  providers: [
-    StartSessionProcessor,
-    SendMessageProcessor,
-    MarkAsReadProcessor,
-  ],
+  providers: [StartSessionProcessor, SendMessageProcessor, MarkAsReadProcessor],
 })
 export class QueueModule {}

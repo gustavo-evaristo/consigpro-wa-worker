@@ -1,24 +1,21 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
-import type { WASocket } from "@whiskeysockets/baileys";
-import * as QRCode from "qrcode";
-import type Redis from "ioredis";
-import { REDIS_PUB } from "../redis/redis.constants";
-import { AcquiredLock, RedisLockService } from "../redis/redis-lock.service";
-import { WhatsAppSessionRepository } from "../persistence/whatsapp-session.repository";
-import { MediaStorageService } from "../storage/media-storage.service";
-import { EventPublisherService } from "../events/event-publisher.service";
-import { loadBaileys } from "./baileys.loader";
-import {
-  invalidateAuthCache,
-  useWhatsAppAuthState,
-} from "./whatsapp-auth-state";
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { WASocket } from '@whiskeysockets/baileys';
+import * as QRCode from 'qrcode';
+import type Redis from 'ioredis';
+import { REDIS_PUB } from '../redis/redis.constants';
+import { AcquiredLock, RedisLockService } from '../redis/redis-lock.service';
+import { WhatsAppSessionRepository } from '../persistence/whatsapp-session.repository';
+import { MediaStorageService } from '../storage/media-storage.service';
+import { EventPublisherService } from '../events/event-publisher.service';
+import { loadBaileys } from './baileys.loader';
+import { invalidateAuthCache, useWhatsAppAuthState } from './whatsapp-auth-state';
 import {
   describeMessageShape,
   extractMessageText,
   mapBaileysStatus,
   normalizeBrazilianPhone,
   unwrapMessageContent,
-} from "./message-extractor";
+} from './message-extractor';
 
 const SESSION_LOCK_TTL_MS = 30_000;
 const SESSION_LOCK_RENEW_MS = 10_000;
@@ -68,33 +65,22 @@ export class SessionManagerService {
     await Promise.all(userIds.map((u) => this.releaseSessionLock(u)));
   }
 
-  async startSession(
-    userId: string,
-    targetPhoneNumber?: string | null,
-  ): Promise<void> {
+  async startSession(userId: string, targetPhoneNumber?: string | null): Promise<void> {
     this.logger.log(
-      `startSession invocado (userId: ${userId}, targetPhone: ${
-        targetPhoneNumber ?? "nenhum"
-      })`,
+      `startSession invocado (userId: ${userId}, targetPhone: ${targetPhoneNumber ?? 'nenhum'})`,
     );
 
     const existingSock = this.sessions.get(userId);
     if (existingSock) {
-      const rawCurrent = existingSock.user?.id?.split(":")[0]?.split("@")[0];
-      const currentPhone = rawCurrent
-        ? normalizeBrazilianPhone("+" + rawCurrent)
-        : null;
-      const desiredPhone = targetPhoneNumber
-        ? normalizeBrazilianPhone(targetPhoneNumber)
-        : null;
+      const rawCurrent = existingSock.user?.id?.split(':')[0]?.split('@')[0];
+      const currentPhone = rawCurrent ? normalizeBrazilianPhone('+' + rawCurrent) : null;
+      const desiredPhone = targetPhoneNumber ? normalizeBrazilianPhone(targetPhoneNumber) : null;
 
       if (desiredPhone && currentPhone && currentPhone === desiredPhone) {
-        this.logger.log(
-          `Sessao ja pareada (${currentPhone}); re-emitindo CONNECTED`,
-        );
+        this.logger.log(`Sessao ja pareada (${currentPhone}); re-emitindo CONNECTED`);
         await this.events.publishStatus({
           userId,
-          status: "CONNECTED",
+          status: 'CONNECTED',
           phone: currentPhone,
         });
         return;
@@ -106,7 +92,7 @@ export class SessionManagerService {
         if (currentPhone) {
           await this.events.publishStatus({
             userId,
-            status: "CONNECTED",
+            status: 'CONNECTED',
             phone: currentPhone,
           });
         }
@@ -124,9 +110,7 @@ export class SessionManagerService {
         .acquire(lockKey(userId), SESSION_LOCK_TTL_MS)
         .catch(() => null);
       if (!lock) {
-        this.logger.log(
-          `startSession ignorado — outra instancia dona da sessao (${userId})`,
-        );
+        this.logger.log(`startSession ignorado — outra instancia dona da sessao (${userId})`);
         return;
       }
       this.sessionLocks.set(userId, lock);
@@ -144,11 +128,7 @@ export class SessionManagerService {
       const baileys = await loadBaileys();
       DisconnectReason = baileys.DisconnectReason;
 
-      const authState = await useWhatsAppAuthState(
-        userId,
-        this.sessionRepository,
-        this.redis,
-      );
+      const authState = await useWhatsAppAuthState(userId, this.sessionRepository, this.redis);
       saveCreds = authState.saveCreds;
       const { version } = await baileys.fetchLatestBaileysVersion();
 
@@ -156,7 +136,7 @@ export class SessionManagerService {
       this.stores.set(userId, lidToPhone);
 
       const noopLogger: any = {
-        level: "silent",
+        level: 'silent',
         trace: () => {},
         debug: () => {},
         info: () => {},
@@ -171,7 +151,7 @@ export class SessionManagerService {
         auth: authState.state,
         printQRInTerminal: false,
         logger: noopLogger,
-        browser: ["ConsigPro", "Chrome", "1.0.0"],
+        browser: ['ConsigPro', 'Chrome', '1.0.0'],
       });
 
       this.sessions.set(userId, sock);
@@ -183,124 +163,109 @@ export class SessionManagerService {
 
     this.pendingSessions.delete(userId);
 
-    sock.ev.on("creds.update", saveCreds);
+    sock.ev.on('creds.update', saveCreds);
 
     const syncContacts = (contacts: { id: string; lid?: string }[]) => {
       for (const c of contacts) {
-        if (c.lid && c.id.endsWith("@s.whatsapp.net")) {
+        if (c.lid && c.id.endsWith('@s.whatsapp.net')) {
           lidToPhone.set(c.lid, c.id);
         }
       }
     };
-    sock.ev.on("contacts.upsert", syncContacts);
-    sock.ev.on("contacts.update", syncContacts as any);
+    sock.ev.on('contacts.upsert', syncContacts);
+    sock.ev.on('contacts.update', syncContacts as any);
 
-    sock.ev.on(
-      "connection.update",
-      async ({ connection, lastDisconnect, qr }) => {
-        const rawPhone = sock.user?.id?.split(":")[0]?.split("@")[0];
-        const phone = rawPhone ? normalizeBrazilianPhone("+" + rawPhone) : null;
+    sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
+      const rawPhone = sock.user?.id?.split(':')[0]?.split('@')[0];
+      const phone = rawPhone ? normalizeBrazilianPhone('+' + rawPhone) : null;
 
-        if (qr) {
-          this.logger.log(`QR gerado (userId: ${userId})`);
-          const qrDataUrl = await QRCode.toDataURL(qr);
-          await this.events.publishQr({ userId, qrDataUrl });
-          await this.sessionRepository
-            .setConnectionStatus(userId, "PENDING", null)
-            .catch((err) => this.logger.error(`Falha PENDING ${userId}:`, err));
-        }
+      if (qr) {
+        this.logger.log(`QR gerado (userId: ${userId})`);
+        const qrDataUrl = await QRCode.toDataURL(qr);
+        await this.events.publishQr({ userId, qrDataUrl });
+        await this.sessionRepository
+          .setConnectionStatus(userId, 'PENDING', null)
+          .catch((err) => this.logger.error(`Falha PENDING ${userId}:`, err));
+      }
 
-        if (connection === "connecting") {
-          this.logger.log(
-            `connection=connecting (${phone ?? "sem numero"}, ${userId})`,
-          );
-        }
+      if (connection === 'connecting') {
+        this.logger.log(`connection=connecting (${phone ?? 'sem numero'}, ${userId})`);
+      }
 
-        if (connection === "open") {
-          this.logger.log(`connection=open (${phone}, ${userId})`);
-          await this.sessionRepository
-            .setConnectionStatus(userId, "CONNECTED", phone)
-            .catch((err) =>
-              this.logger.error(`Falha CONNECTED ${userId}:`, err),
-            );
-          await this.events.publishStatus({
-            userId,
-            status: "CONNECTED",
-            phone,
-          });
-        }
-
-        if (connection === "close") {
-          const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
-          const reason =
-            Object.entries(DisconnectReason ?? {}).find(
-              ([, v]) => v === statusCode,
-            )?.[0] ?? "desconhecido";
-
-          // socket substituido (forceResetSession ja trocou) — ignora
-          if (this.sessions.get(userId) !== sock) {
-            this.logger.log(
-              `connection=close em socket SUBSTITUIDO — ignorando (${userId})`,
-            );
-            return;
-          }
-          this.sessions.delete(userId);
-
-          const previousPhone = await this.sessionRepository
-            .getConnectedPhone(userId)
-            .catch(() => null);
-
-          this.logger.warn(
-            `connection=close (${phone ?? previousPhone ?? "?"}, ${userId}, statusCode: ${statusCode}, reason: ${reason})`,
-          );
-
-          await this.sessionRepository
-            .setConnectionStatus(userId, "DISCONNECTED", null)
-            .catch((err) =>
-              this.logger.error(`Falha DISCONNECTED ${userId}:`, err),
-            );
-          await this.events.publishStatus({
-            userId,
-            status: "DISCONNECTED",
-            phone: previousPhone,
-          });
-
-          const loggedOut = statusCode === DisconnectReason.loggedOut;
-          if (loggedOut) {
-            this.logger.warn(`LOGOUT — removendo creds (${userId})`);
-            await this.sessionRepository.delete(userId);
-            await invalidateAuthCache(userId, this.redis);
-            this.stores.delete(userId);
-            await this.releaseSessionLock(userId);
-          } else if (statusCode === DisconnectReason.connectionReplaced) {
-            this.logger.warn(`connectionReplaced — liberando lock (${userId})`);
-            this.stores.delete(userId);
-            await this.releaseSessionLock(userId);
-          } else {
-            // reconnect agendado em 2s (rede instavel, 428, 515 etc)
-            setTimeout(() => {
-              this.startSession(userId).catch((err) =>
-                this.logger.error(`Erro ao reconectar ${userId}:`, err),
-              );
-            }, 2000);
-          }
-        }
-      },
-    );
-
-    sock.ev.on("messages.upsert", async ({ messages, type }) => {
-      if (type !== "notify") return;
-      for (const message of messages) {
-        await this.handleIncomingMessage(
+      if (connection === 'open') {
+        this.logger.log(`connection=open (${phone}, ${userId})`);
+        await this.sessionRepository
+          .setConnectionStatus(userId, 'CONNECTED', phone)
+          .catch((err) => this.logger.error(`Falha CONNECTED ${userId}:`, err));
+        await this.events.publishStatus({
           userId,
-          sock,
-          message,
-          lidToPhone,
-        ).catch((err) => this.logger.error(`Erro ao processar mensagem:`, err));
+          status: 'CONNECTED',
+          phone,
+        });
+      }
+
+      if (connection === 'close') {
+        const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
+        const reason =
+          Object.entries(DisconnectReason ?? {}).find(([, v]) => v === statusCode)?.[0] ??
+          'desconhecido';
+
+        // socket substituido (forceResetSession ja trocou) — ignora
+        if (this.sessions.get(userId) !== sock) {
+          this.logger.log(`connection=close em socket SUBSTITUIDO — ignorando (${userId})`);
+          return;
+        }
+        this.sessions.delete(userId);
+
+        const previousPhone = await this.sessionRepository
+          .getConnectedPhone(userId)
+          .catch(() => null);
+
+        this.logger.warn(
+          `connection=close (${phone ?? previousPhone ?? '?'}, ${userId}, statusCode: ${statusCode}, reason: ${reason})`,
+        );
+
+        await this.sessionRepository
+          .setConnectionStatus(userId, 'DISCONNECTED', null)
+          .catch((err) => this.logger.error(`Falha DISCONNECTED ${userId}:`, err));
+        await this.events.publishStatus({
+          userId,
+          status: 'DISCONNECTED',
+          phone: previousPhone,
+        });
+
+        const loggedOut = statusCode === DisconnectReason.loggedOut;
+        if (loggedOut) {
+          this.logger.warn(`LOGOUT — removendo creds (${userId})`);
+          await this.sessionRepository.delete(userId);
+          await invalidateAuthCache(userId, this.redis);
+          this.stores.delete(userId);
+          await this.releaseSessionLock(userId);
+        } else if (statusCode === DisconnectReason.connectionReplaced) {
+          this.logger.warn(`connectionReplaced — liberando lock (${userId})`);
+          this.stores.delete(userId);
+          await this.releaseSessionLock(userId);
+        } else {
+          // reconnect agendado em 2s (rede instavel, 428, 515 etc)
+          setTimeout(() => {
+            this.startSession(userId).catch((err) =>
+              this.logger.error(`Erro ao reconectar ${userId}:`, err),
+            );
+          }, 2000);
+        }
       }
     });
 
-    sock.ev.on("messages.update", async (updates) => {
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      if (type !== 'notify') return;
+      for (const message of messages) {
+        await this.handleIncomingMessage(userId, sock, message, lidToPhone).catch((err) =>
+          this.logger.error(`Erro ao processar mensagem:`, err),
+        );
+      }
+    });
+
+    sock.ev.on('messages.update', async (updates) => {
       for (const u of updates) {
         const numericStatus = u.update?.status;
         if (numericStatus === undefined || numericStatus === null) continue;
@@ -328,7 +293,7 @@ export class SessionManagerService {
   ): Promise<{ whatsappMessageId: string | null }> {
     const sock = await this.waitForActiveSession(userId, 15_000);
     if (!sock) {
-      throw new Error("Sessao WhatsApp nao esta ativa.");
+      throw new Error('Sessao WhatsApp nao esta ativa.');
     }
     const jid = await this.resolveJid(sock, leadPhoneNumber);
     const sent = await sock.sendMessage(jid, { text: content });
@@ -343,8 +308,8 @@ export class SessionManagerService {
     if (!sock || keys.length === 0) return;
     const resolved = await Promise.all(
       keys.map(async (k) => {
-        const phone = k.remoteJid.split("@")[0];
-        const jid = await this.resolveJid(sock, "+" + phone);
+        const phone = k.remoteJid.split('@')[0];
+        const jid = await this.resolveJid(sock, '+' + phone);
         return { id: k.id, remoteJid: jid, fromMe: k.fromMe ?? false };
       }),
     );
@@ -357,9 +322,7 @@ export class SessionManagerService {
     const existing = this.lockRenewers.get(userId);
     if (existing) clearInterval(existing);
     const timer = setInterval(async () => {
-      const renewed = await this.redisLock
-        .renew(lock, SESSION_LOCK_TTL_MS)
-        .catch(() => false);
+      const renewed = await this.redisLock.renew(lock, SESSION_LOCK_TTL_MS).catch(() => false);
       if (!renewed) {
         this.logger.warn(`Lock perdido (${userId}) — encerrando socket local`);
         await this.releaseSessionLock(userId);
@@ -388,10 +351,7 @@ export class SessionManagerService {
     }
   }
 
-  private async forceResetSession(
-    userId: string,
-    sock: WASocket,
-  ): Promise<void> {
+  private async forceResetSession(userId: string, sock: WASocket): Promise<void> {
     this.sessions.delete(userId);
     this.stores.delete(userId);
     await this.releaseSessionLock(userId);
@@ -412,17 +372,10 @@ export class SessionManagerService {
     return readyState === 1 && !!sock.user;
   }
 
-  private async waitForActiveSession(
-    userId: string,
-    timeoutMs: number,
-  ): Promise<WASocket | null> {
+  private async waitForActiveSession(userId: string, timeoutMs: number): Promise<WASocket | null> {
     const start = Date.now();
     const initial = this.sessions.get(userId);
-    if (
-      !initial &&
-      !this.pendingSessions.has(userId) &&
-      this.sessionLocks.has(userId)
-    ) {
+    if (!initial && !this.pendingSessions.has(userId) && this.sessionLocks.has(userId)) {
       this.startSession(userId).catch(() => {});
     }
     while (Date.now() - start < timeoutMs) {
@@ -456,12 +409,7 @@ export class SessionManagerService {
     lidToPhone: Map<string, string>,
   ) {
     const jid = message.key?.remoteJid;
-    if (
-      !jid ||
-      jid.endsWith("@g.us") ||
-      jid.endsWith("@broadcast") ||
-      jid.endsWith("@newsletter")
-    )
+    if (!jid || jid.endsWith('@g.us') || jid.endsWith('@broadcast') || jid.endsWith('@newsletter'))
       return;
     if (message.key?.fromMe) return;
 
@@ -469,14 +417,12 @@ export class SessionManagerService {
     const innerMessage = unwrapMessageContent(message.message);
     const isImage = !!innerMessage?.imageMessage;
     const rawText = extractMessageText(innerMessage);
-    const messageText = isImage ? rawText || "[Imagem]" : rawText;
+    const messageText = isImage ? rawText || '[Imagem]' : rawText;
 
-    if (!messageText || messageText.trim() === "") {
+    if (!messageText || messageText.trim() === '') {
       const shape = describeMessageShape(message.message);
       if (!shape) {
-        this.logger.warn(
-          `Mensagem perdida por falha cripto (wppId: ${wppId}, userId: ${userId})`,
-        );
+        this.logger.warn(`Mensagem perdida por falha cripto (wppId: ${wppId}, userId: ${userId})`);
         return;
       }
       this.logger.warn(
@@ -491,10 +437,10 @@ export class SessionManagerService {
     }
 
     let phoneJid = jid;
-    if (jid.endsWith("@lid")) {
+    if (jid.endsWith('@lid')) {
       const resolved = message.key?.remoteJidAlt ?? lidToPhone.get(jid);
 
-      if (!resolved || resolved.endsWith("@lid")) {
+      if (!resolved || resolved.endsWith('@lid')) {
         this.logger.warn(
           `LID nao resolvido para numero — mensagem ignorada (jid: ${jid}, wppId: ${wppId}, userId: ${userId})`,
         );
@@ -502,10 +448,10 @@ export class SessionManagerService {
       }
       phoneJid = resolved;
     }
-    const rawNumber = phoneJid.split("@")[0];
+    const rawNumber = phoneJid.split('@')[0];
     if (!rawNumber || !/^\d+$/.test(rawNumber)) return;
 
-    const leadPhoneNumber = normalizeBrazilianPhone("+" + rawNumber);
+    const leadPhoneNumber = normalizeBrazilianPhone('+' + rawNumber);
     if (!/^\+\d{10,15}$/.test(leadPhoneNumber)) {
       this.logger.warn(
         `Numero fora do padrao E.164 — mensagem ignorada (numero: ${leadPhoneNumber}, jid: ${jid}, wppId: ${wppId}, userId: ${userId})`,
@@ -513,34 +459,28 @@ export class SessionManagerService {
       return;
     }
     const botPhoneNumber = sock.user?.id
-      ? normalizeBrazilianPhone("+" + sock.user.id.split(":")[0].split("@")[0])
-      : "";
+      ? normalizeBrazilianPhone('+' + sock.user.id.split(':')[0].split('@')[0])
+      : '';
     const leadName = message.pushName || null;
 
     let mediaUrl: string | null = null;
     if (isImage && this.mediaStorage.isEnabled()) {
       try {
         const baileys = await loadBaileys();
-        const buffer = (await baileys.downloadMediaMessage(
-          message,
-          "buffer",
-          {},
-        )) as Buffer;
-        const mimeType = innerMessage.imageMessage?.mimetype || "image/jpeg";
-        const ext = mimeType.split("/")[1]?.split(";")[0] || "jpg";
+        const buffer = (await baileys.downloadMediaMessage(message, 'buffer', {})) as Buffer;
+        const mimeType = innerMessage.imageMessage?.mimetype || 'image/jpeg';
+        const ext = mimeType.split('/')[1]?.split(';')[0] || 'jpg';
         const path = `${userId}/${wppId ?? Date.now()}.${ext}`;
         mediaUrl = await this.mediaStorage.uploadImage(buffer, path, mimeType);
       } catch (err) {
-        this.logger.warn(
-          `Falha upload imagem (${wppId}, ${userId}): ${(err as Error).message}`,
-        );
+        this.logger.warn(`Falha upload imagem (${wppId}, ${userId}): ${(err as Error).message}`);
       }
     }
-    const mediaType: "image" | null = isImage && mediaUrl ? "image" : null;
+    const mediaType: 'image' | null = isImage && mediaUrl ? 'image' : null;
 
     this.logger.log(
       `Msg recebida — bot: ${botPhoneNumber} | lead: ${leadPhoneNumber} | texto: "${messageText}"${
-        mediaUrl ? " | midia: image" : ""
+        mediaUrl ? ' | midia: image' : ''
       }`,
     );
 
@@ -558,8 +498,8 @@ export class SessionManagerService {
   }
 
   private async resolveJid(sock: WASocket, phone: string): Promise<string> {
-    const cleanPhone = phone.replace("+", "");
-    const fallback = cleanPhone + "@s.whatsapp.net";
+    const cleanPhone = phone.replace('+', '');
+    const fallback = cleanPhone + '@s.whatsapp.net';
     try {
       const candidates = brazilianPhoneCandidates(cleanPhone);
       const results = await sock.onWhatsApp(...candidates);
@@ -573,12 +513,12 @@ export class SessionManagerService {
 }
 
 function brazilianPhoneCandidates(cleanPhone: string): string[] {
-  if (!cleanPhone.startsWith("55")) return [cleanPhone];
+  if (!cleanPhone.startsWith('55')) return [cleanPhone];
   if (cleanPhone.length === 13) {
     return [cleanPhone, cleanPhone.slice(0, 4) + cleanPhone.slice(5)];
   }
   if (cleanPhone.length === 12) {
-    return [cleanPhone, cleanPhone.slice(0, 4) + "9" + cleanPhone.slice(4)];
+    return [cleanPhone, cleanPhone.slice(0, 4) + '9' + cleanPhone.slice(4)];
   }
   return [cleanPhone];
 }

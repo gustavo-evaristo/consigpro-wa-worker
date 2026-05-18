@@ -1,7 +1,4 @@
-import type {
-  AuthenticationState,
-  SignalDataTypeMap,
-} from '@whiskeysockets/baileys';
+import type { AuthenticationState, SignalDataTypeMap } from '@whiskeysockets/baileys';
 import type Redis from 'ioredis';
 import { WhatsAppSessionRepository } from '../persistence/whatsapp-session.repository';
 import { loadBaileys } from './baileys.loader';
@@ -14,10 +11,7 @@ interface CachedAuthBlob {
   keys: string;
 }
 
-export async function invalidateAuthCache(
-  userId: string,
-  redis: Redis | null,
-): Promise<void> {
+export async function invalidateAuthCache(userId: string, redis: Redis | null): Promise<void> {
   if (!redis) return;
   try {
     await redis.del(cacheKey(userId));
@@ -46,9 +40,7 @@ async function loadFromCacheOrDb(
     keys: stored.keys ?? '{}',
   };
   if (redis) {
-    redis
-      .set(cacheKey(userId), JSON.stringify(blob), 'EX', CACHE_TTL_SECONDS)
-      .catch(() => {});
+    redis.set(cacheKey(userId), JSON.stringify(blob), 'EX', CACHE_TTL_SECONDS).catch(() => {});
   }
   return blob;
 }
@@ -62,13 +54,9 @@ export async function useWhatsAppAuthState(
 
   const stored = await loadFromCacheOrDb(userId, repository, redis);
 
-  let creds = stored?.creds
-    ? JSON.parse(stored.creds, BufferJSON.reviver)
-    : initAuthCreds();
+  const creds = stored?.creds ? JSON.parse(stored.creds, BufferJSON.reviver) : initAuthCreds();
 
-  let keys: Record<string, any> = stored?.keys
-    ? JSON.parse(stored.keys, BufferJSON.reviver)
-    : {};
+  const keys: Record<string, any> = stored?.keys ? JSON.parse(stored.keys, BufferJSON.reviver) : {};
 
   const persist = async () => {
     const credsStr = JSON.stringify(creds, BufferJSON.replacer);
@@ -90,10 +78,7 @@ export async function useWhatsAppAuthState(
     state: {
       creds,
       keys: {
-        get: async <T extends keyof SignalDataTypeMap>(
-          type: T,
-          ids: string[],
-        ) => {
+        get: async <T extends keyof SignalDataTypeMap>(type: T, ids: string[]) => {
           const result: { [id: string]: SignalDataTypeMap[T] } = {};
           for (const id of ids) {
             let value = keys[`${type}-${id}`];

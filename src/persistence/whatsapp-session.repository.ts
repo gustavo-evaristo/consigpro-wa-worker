@@ -19,11 +19,7 @@ export class WhatsAppSessionRepository {
     return { userId: r.userId, creds: r.creds, keys: r.keys };
   }
 
-  async save(
-    userId: string,
-    creds: string,
-    keys: string,
-  ): Promise<void> {
+  async save(userId: string, creds: string, keys: string): Promise<void> {
     await this.prisma.whatsapp_sessions.upsert({
       where: { userId },
       update: { creds, keys, updatedAt: new Date() },
@@ -53,9 +49,7 @@ export class WhatsAppSessionRepository {
   }
 
   async delete(userId: string): Promise<void> {
-    await this.prisma.whatsapp_sessions
-      .delete({ where: { userId } })
-      .catch(() => {});
+    await this.prisma.whatsapp_sessions.delete({ where: { userId } }).catch(() => {});
   }
 
   async findAllUserIds(): Promise<string[]> {

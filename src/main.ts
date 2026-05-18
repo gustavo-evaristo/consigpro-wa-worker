@@ -20,8 +20,7 @@ function silenceLibsignalNoise() {
     /^\s+at async \d+_[\d.]+/,
     /^\s+at async SessionCipher/,
   ];
-  const matches = (arg: unknown) =>
-    typeof arg === 'string' && SUPPRESS.some((re) => re.test(arg));
+  const matches = (arg: unknown) => typeof arg === 'string' && SUPPRESS.some((re) => re.test(arg));
   const origLog = console.log.bind(console);
   const origError = console.error.bind(console);
   console.log = (...args: unknown[]) => {

@@ -15,9 +15,7 @@ export class MarkAsReadProcessor extends WorkerHost {
 
   async process(job: Job<MarkAsReadJobData>): Promise<void> {
     if (!isWaWorkerActive()) {
-      this.logger.warn(
-        `[job:mark-as-read] worker em standby — ignorando read receipt`,
-      );
+      this.logger.warn(`[job:mark-as-read] worker em standby — ignorando read receipt`);
       return;
     }
     const { userId, keys } = job.data;

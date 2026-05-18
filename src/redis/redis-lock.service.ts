@@ -52,9 +52,7 @@ export class RedisLockService {
     try {
       await this.redis.eval(RELEASE_SCRIPT, 1, lock.key, lock.token);
     } catch (err) {
-      this.logger.warn(
-        `Falha ao liberar lock ${lock.key}: ${(err as Error).message}`,
-      );
+      this.logger.warn(`Falha ao liberar lock ${lock.key}: ${(err as Error).message}`);
     }
   }
 }

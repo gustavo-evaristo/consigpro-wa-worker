@@ -35,9 +35,9 @@ export class ReconcileService implements OnApplicationShutdown {
       for (const userId of userIds) {
         if (this.sessions.hasLocal(userId)) continue;
         if (this.sessions.isPending(userId)) continue;
-        this.sessions.startSession(userId).catch((err) =>
-          this.logger.error(`reconcile falhou ${userId}:`, err),
-        );
+        this.sessions
+          .startSession(userId)
+          .catch((err) => this.logger.error(`reconcile falhou ${userId}:`, err));
       }
     } catch (err) {
       this.logger.error('reconcile erro:', err);

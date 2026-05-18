@@ -21,9 +21,7 @@ export class StartSessionProcessor extends WorkerHost {
       return;
     }
     const { userId, targetPhoneNumber } = job.data;
-    this.logger.log(
-      `[job:start-session] userId=${userId} phone=${targetPhoneNumber ?? '-'}`,
-    );
+    this.logger.log(`[job:start-session] userId=${userId} phone=${targetPhoneNumber ?? '-'}`);
     await this.sessions.startSession(userId, targetPhoneNumber ?? null);
   }
 }
