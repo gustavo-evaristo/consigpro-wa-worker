@@ -411,7 +411,12 @@ export class SessionManagerService {
     const jid = message.key?.remoteJid;
     if (!jid || jid.endsWith('@g.us') || jid.endsWith('@broadcast') || jid.endsWith('@newsletter'))
       return;
-    if (message.key?.fromMe) return;
+    // fromMe=true significa que a mensagem foi enviada pelo proprio numero
+    // conectado — pode ter sido enviada pelo nosso app web (ja persistida) ou
+    // diretamente pelo WhatsApp Business no celular. Em ambos os casos
+    // publicamos no canal "sent_from_phone"; a API faz dedupe por
+    // whatsappMessageId para nao duplicar o que ja foi salvo no envio.
+    const fromMe = !!message.key?.fromMe;
 
     const wppId = (message.key?.id as string | undefined) ?? null;
     const innerMessage = unwrapMessageContent(message.message);
@@ -461,7 +466,9 @@ export class SessionManagerService {
     const botPhoneNumber = sock.user?.id
       ? normalizeBrazilianPhone('+' + sock.user.id.split(':')[0].split('@')[0])
       : '';
-    const leadName = message.pushName || null;
+    // Em mensagens fromMe o pushName é o do proprio numero conectado, nao do
+    // lead — entao nao serve para nomear o lead.
+    const leadName = fromMe ? null : message.pushName || null;
 
     let mediaUrl: string | null = null;
     if (isImage && this.mediaStorage.isEnabled()) {
@@ -479,10 +486,24 @@ export class SessionManagerService {
     const mediaType: 'image' | null = isImage && mediaUrl ? 'image' : null;
 
     this.logger.log(
-      `Msg recebida — bot: ${botPhoneNumber} | lead: ${leadPhoneNumber} | texto: "${messageText}"${
+      `Msg ${fromMe ? 'enviada (celular/web)' : 'recebida'} — bot: ${botPhoneNumber} | lead: ${leadPhoneNumber} | texto: "${messageText}"${
         mediaUrl ? ' | midia: image' : ''
       }`,
     );
+
+    if (fromMe) {
+      await this.events.publishMessageSentFromPhone({
+        userId,
+        whatsappMessageId: wppId,
+        botPhoneNumber,
+        leadPhoneNumber,
+        text: messageText,
+        mediaUrl,
+        mediaType,
+        sentAt: new Date().toISOString(),
+      });
+      return;
+    }
 
     await this.events.publishMessageReceived({
       userId,

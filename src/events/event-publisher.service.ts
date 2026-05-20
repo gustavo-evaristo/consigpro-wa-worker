@@ -3,10 +3,12 @@ import Redis from 'ioredis';
 import { REDIS_PUB } from '../redis/redis.constants';
 import {
   WA_EVENT_MESSAGE_RECEIVED,
+  WA_EVENT_MESSAGE_SENT_FROM_PHONE,
   WA_EVENT_MESSAGE_STATUS,
   WA_EVENT_QR,
   WA_EVENT_STATUS,
   WaMessageReceivedPayload,
+  WaMessageSentFromPhonePayload,
   WaMessageStatusPayload,
   WaQrEventPayload,
   WaStatusEventPayload,
@@ -40,5 +42,9 @@ export class EventPublisherService {
 
   publishMessageStatus(payload: WaMessageStatusPayload) {
     return this.publish(WA_EVENT_MESSAGE_STATUS, payload);
+  }
+
+  publishMessageSentFromPhone(payload: WaMessageSentFromPhonePayload) {
+    return this.publish(WA_EVENT_MESSAGE_SENT_FROM_PHONE, payload);
   }
 }
